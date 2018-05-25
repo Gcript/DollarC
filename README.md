@@ -1,4 +1,2 @@
 # $C
-## A OpenGl Game With [GtCui][1]
-
-[1]:(https://github.com/Gcript/GtCui)
+## A OpenGl Game With [GtCui](https://github.com/Gcript/GtCui)
