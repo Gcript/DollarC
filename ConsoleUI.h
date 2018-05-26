@@ -1,9 +1,12 @@
+#include <stdio.h>
+#include <conio.h>
 
-void UIInit ()
+void UIInit()
 {
 	SetConsoleTitle("Dollar C");
-	system("mode con cols=50 lines=20&color 8f");
+	system("mode con cols=30 lines=17&color 8f");
 }
+
 void Start()
 {
 	printf(/*$off*/
@@ -18,7 +21,11 @@ void Start()
 	"    ----+---'    `--------\n"
 	"        |\n"
 	"\n"
-	"    Press any key to start\n"
+	"Control:      C\n"
+	"            B-+-A\n"
+	"              D\n"
+	"\n"
+	"    Press any key to start"
 	/*$on*/
 	);
 	getch();
