@@ -1,11 +1,12 @@
 
 
 void UIInit() {
-	system("@echo off&title Dollar C&mode con cols=73 lines=15&color 8f");
+	SetConsoleTitle("Dollar C");
+	system("mode con cols=73 lines=15&color 8f");
 }
 
 void Start() {
-	printf_s("\n"
+	printf("\n"
 		     "\n"
 		     "                              Dollar C                                  \n"
 			 "\n"
@@ -17,4 +18,9 @@ void Start() {
 	   		 "               D                                                        \n"
 	);
 	system("pause>null");
+	FreeConsole();
+}
+
+void Return() {
+	AllocConsole();
 }
