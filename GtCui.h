@@ -15,8 +15,8 @@
 /* TYPES */
 typedef struct stGtRect
 {
-	double	x, y, w, h;
-	double	r, g, b, a;
+	GLfloat	x, y, w, h;
+	GLfloat	r, g, b, a;
 } GtRect;
 
 /* VERIABLES */
@@ -56,8 +56,10 @@ void Gt_init(const char *VSs, const char *FSs)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	{
 		GLuint	GVS, GFS;
+#ifdef GTCUI_DEBUG
 		int	Status;
 		char	infoLog[512];
+#endif
 
 		GVS = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(GVS, 1, &VSs, NULL);
@@ -111,7 +113,7 @@ void Gt_init(const char *VSs, const char *FSs)
 
 void Gt_Draw(GtRect *g, int n)
 {
-	int	i, j;
+	int	i;
 
 	for(i = 0; i < n; i++)
 	{
