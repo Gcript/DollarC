@@ -87,8 +87,8 @@ void dollarC()
 		{
 			//if(glfwGetKey(DCMain, GLFW_KEY_F)) timer++;
 			if(glfwGetKey(DCMain, GLFW_KEY_C)) Sx = 0, Sy = 1;
-			if(glfwGetKey(DCMain, GLFW_KEY_B)) Sx = 1, Sy = 0;
-			if(glfwGetKey(DCMain, GLFW_KEY_A)) Sx = -1, Sy = 0;
+			if(glfwGetKey(DCMain, GLFW_KEY_B)) Sx = -1, Sy = 0;
+			if(glfwGetKey(DCMain, GLFW_KEY_A)) Sx = 1, Sy = 0;
 			if(glfwGetKey(DCMain, GLFW_KEY_D)) Sx = 0, Sy = -1;
 			if(glfwGetKey(DCMain, GLFW_KEY_ESCAPE)) return;
 
