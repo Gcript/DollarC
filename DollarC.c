@@ -1,5 +1,7 @@
+#define GTCUI_DEBUG
 #include <GtCui.h>
-#include <Windows.h>
+
+//#include <Windows.h>
 #include "ConsoleUI.h"
 
 #include <math.h>
@@ -11,36 +13,75 @@
 #define MAP_SIZE	256
 
 /*$off*/
+GLubyte bDollar[] =
+	"             "
+	"             "
+	"      !      "
+	"    !!!!!    "
+	"      ! !    "
+	"      ! !    "
+	"    !!!!!    "
+	"    ! !      "
+	"    ! !      "
+	"    !!!!!    "
+	"      !      "
+	"             "
+	"             ";
+GLubyte bC[] =
+	"             "
+	"             "
+	"   !         "
+	" !!!!! !!!!! "
+	"   ! ! !     "
+	"   ! ! !     "
+	" !!!!! !     "
+	" ! !   !     "
+	" ! !   !     "
+	" !!!!! !!!!! "
+	"   !         "
+	"             "
+	"             ";
 const char	*DCVS =
 	"#version 330 core\n"
-	"layout (location = 0) in vec2 aPos;"
-	"out vec2 Pos;"
+	"layout (location = 0) in vec2 vPos;"
+	"layout (location = 1) in vec2 vTex;"
+	"out vec2 fPos;"
+	"out vec2 fTex;"
 	"void main(){"
-		"gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);"
-		"Pos = aPos;"
+		"gl_Position = vec4(vPos.x, vPos.y, 0, 1);"
+		"fPos = vPos;"
+		"fTex = vTex;"
 	"}";
 const char	*DCFS =
 	"#version 330 core\n"
-	"in vec2 Pos;"
 	"uniform vec4 Color;"
-	"out vec4 FragColor;"
+	"uniform sampler2D Texture;"
+	"uniform bool TexMode = false;"
+	"in vec2 fPos;"
+	"in vec2 fTex;"
+	"out vec4 fColor;"
 	"void main(){"
-		"FragColor = Color;"
-		"if(abs(Pos.x) > 0.8)"
-			"FragColor = mix(FragColor, vec4(0, 0, 0, 0), (abs(Pos.x) - 0.8) * 5);"
-		"if(abs(Pos.y) > 0.8)"
-			"FragColor = mix(FragColor, vec4(0, 0, 0, 0), (abs(Pos.y) - 0.8) * 5);"
+		"fColor = Color;"
+		"if(TexMode)"
+			"fColor.rgb = Color.rgb * texture(Texture, fTex).a;"
+		"if(abs(fPos.x) > 0.8)"
+			"fColor = mix(fColor, vec4(0, 0, 0, 0), (abs(fPos.x) - 0.8) * 5);"
+		"if(abs(fPos.y) > 0.8)"
+			"fColor = mix(fColor, vec4(0, 0, 0, 0), (abs(fPos.y) - 0.8) * 5);"
 	"}";
 /*$on*/
 GLFWwindow	*DCMain;
+GLuint		tDollar, tC;
 
 void		dollarC();
 void		QIANSIP(int Mx, int My);
 void		DCdraw();
 void		DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4]);
+void		framebuffer_size_callback(GLFWwindow *window, int w, int h);
 
 int main()
 {
+	int	i;
 	UIInit();
 	Start();
 
@@ -50,12 +91,30 @@ int main()
 	glfwInit();
 	DCMain = glfwCreateWindow(600, 600, "Dollar C", NULL, NULL);
 	glfwMakeContextCurrent(DCMain);
+	glfwSetFramebufferSizeCallback(DCMain, framebuffer_size_callback);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
 	Gt_init(DCVS, DCFS);
 
 	//Gt_ScrSize(800, 600);    //不使用Gt_Input
 	glViewport(0, 0, 600, 600);
+
+
+	for(i = 0; i < sizeof(bDollar); i++) bDollar[i] = bDollar[i] == ' ' ? '\xFF' : '\x80';
+	glGenTextures(1, &tDollar);
+	glBindTexture(GL_TEXTURE_2D, tDollar);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 13, 13, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bDollar);
+
+	for(i = 0; i < sizeof(bC); i++) bC[i] = bC[i] == ' ' ? '\xFF' : '\x80';
+	glGenTextures(1, &tC);
+	glBindTexture(GL_TEXTURE_2D, tC);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 13, 13, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bC);
 
 	dollarC();
 
@@ -181,17 +240,19 @@ void dollarC()
 void QIANSIP(int Mx, int My)
 {
 	int	i, j;
-	double	Px0 = Px, Py0 = Py;
 	GtRect	gr[17];
 	for(i = 0; i < 64; i++)
 	{
-		Px = Px0 + (Mx + 0.5 - Px0) * i / 64;
-		Py = Py0 + (My + 0.5 - Py0) * i / 64;
+		if(glfwWindowShouldClose(DCMain)) return;
+		Px += (Mx + 0.5 - Px) * 0.05;
+		Py += (My + 0.5 - Py) * 0.05;
 		DCdraw();
 		glfwSwapBuffers(DCMain);
 		glfwSwapInterval(1);
 		glfwPollEvents();
 	}
+
+	Gt_EnableTex(tC);
 
 	for(i = 0; i < 17; i++)
 	{
@@ -219,12 +280,13 @@ void QIANSIP(int Mx, int My)
 	for(i = 0; i < 256; i++)
 	{
 		int	t = i / 8 + 1;
+		if(glfwWindowShouldClose(DCMain)) return;
 		if(t > 17) t = 17;
 		for(j = 0; j < t; j++)
 		{
-			gr[j].x = gr[j].y = -0.8 - ((-0.8 - gr[j].x) * 0.9);
+			gr[j].x = gr[j].y += ((-0.8 - gr[j].x) * 0.1);
 			gr[j].w = gr[j].h = -gr[j].x * 2;
-			gr[j].a = 1 - ((1 - gr[j].a) * 0.95);
+			gr[j].a += ((1 - gr[j].a) * 0.05);
 		}
 
 		Gt_Draw(gr, t);
@@ -245,6 +307,8 @@ void DCdraw()
 
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	Gt_EnableTex(tDollar);
 
 	for(x = 0; x < 17; x++)
 	{
@@ -299,6 +363,7 @@ void DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4])
 {
 	int	i;
 	GLfloat I[32][2];
+	Gt_DisableTex();
 	for(i = 0; i < 32; i++)
 	{
 		I[i][0] = x + r * cos(2 * M_PI * i / 32);
@@ -312,4 +377,10 @@ void DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4])
 	glBindBuffer(GL_ARRAY_BUFFER, Gt_VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(I), I, GL_STREAM_DRAW);
 	glDrawArrays(GL_POLYGON, 0, 32);
+}
+
+void framebuffer_size_callback(GLFWwindow *window, int w, int h)
+{
+	glViewport(0, 0, w, h);
+	glfwSetWindowAspectRatio(window, 1, 1);
 }

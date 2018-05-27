@@ -15,19 +15,23 @@
 /* TYPES */
 typedef struct stGtRect
 {
-	GLfloat	x, y, w, h;
-	GLfloat	r, g, b, a;
+	GLfloat x, y, w, h;
+	GLfloat r, g, b, a;
 } GtRect;
 
 /* VERIABLES */
-GLuint	Gt_VAO, Gt_VBO, Gt_GP;
-GLuint	Gt_lColor;
+GLuint	Gt_VAO, Gt_VBO, Gt_VBOtex, Gt_GP, Gt_Tex;
+int	Gt_TexMode;
+GLuint	Gt_lColor, Gt_lTexture, Gt_lTexMode;
 double	Gt_ScrW, Gt_ScrH;
 
 /* FUNCTIONS & MACROS */
 #define Gt_ScrSize(W, H)		(Gt_ScrW = (W), Gt_ScrH = (H))
 #define Gt_SetPos(_, X, Y, W, H)	((_).x = (X), (_).y = (Y), (_).w = (W), (_).h = (H))
 #define Gt_SetColor(_, R, G, B, A)	((_).r = (R), (_).g = (G), (_).b = (B), (_).a = (A))
+#define Gt_EnableTex(Tex)		(Gt_TexMode = 1, Gt_Tex = Tex)
+#define Gt_DisableTex()			(Gt_TexMode = 0)
+
 void		Gt_init(const char *VSs, const char *FSs);
 void		Gt_Draw(GtRect *g, int n);
 int		Gt_Input(GtRect *g, int n, double xpos, double ypos);
@@ -35,16 +39,25 @@ int		Gt_Input(GtRect *g, int n, double xpos, double ypos);
 /*$off*/
 const char	*Gt_DefVSs =
 	"#version 330 core\n"
-	"layout (location = 0) in vec2 aPos;"
+	"layout (location = 0) in vec2 vPos;"
+	"layout (location = 1) in vec2 vTex;"
+	"out vec2 fTex;"
 	"void main(){"
-		"gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);"
+		"gl_Position = vec4(vPos.x, vPos.y, 0, 1);"
+		"fTex = vTex;"
 	"}";
 const char	*Gt_DefFSs =
 	"#version 330 core\n"
-	"uniform vec4 Color;"
-	"out vec4 FragColor;"
+	"uniform vec4 Color = vec4(0, 0, 0, 0);"
+	"uniform sampler2D Texture;"
+	"uniform bool TexMode = false;"
+	"in vec2 fTex;"
+	"out vec4 fColor;"
 	"void main(){"
-		"FragColor = Color;"
+		"if(TexMode)"
+			"fColor = texture(Texture, fTex);"
+		"else "
+			"fColor = Color;"
 	"}";
 /*$on*/
 void Gt_init(const char *VSs, const char *FSs)
@@ -60,7 +73,6 @@ void Gt_init(const char *VSs, const char *FSs)
 		int	Status;
 		char	infoLog[512];
 #endif
-
 		GVS = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(GVS, 1, &VSs, NULL);
 		glCompileShader(GVS);
@@ -100,20 +112,39 @@ void Gt_init(const char *VSs, const char *FSs)
 		glDeleteShader(GFS);
 
 		Gt_lColor = glGetUniformLocation(Gt_GP, "Color");
+		Gt_lTexture = glGetUniformLocation(Gt_GP, "Texture");
+		Gt_lTexMode = glGetUniformLocation(Gt_GP, "TexMode");
 	}
 
 	glGenVertexArrays(1, &Gt_VAO);
 	glBindVertexArray(Gt_VAO);
 
 	glGenBuffers(1, &Gt_VBO);
+	glGenBuffers(1, &Gt_VBOtex);
+
 	glBindBuffer(GL_ARRAY_BUFFER, Gt_VBO);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *) 0);
 	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, Gt_VBOtex);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *) 0);
+	glEnableVertexAttribArray(1);
 }
 
 void Gt_Draw(GtRect *g, int n)
 {
-	int	i;
+	int		i;
+	const GLfloat	Vt[][2] = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } };
+
+	glBindBuffer(GL_ARRAY_BUFFER, Gt_VBOtex);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vt), Vt, GL_DYNAMIC_DRAW);
+
+	glUniform1i(Gt_lTexMode, Gt_TexMode);
+	if(Gt_TexMode)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, Gt_Tex);
+	}
 
 	for(i = 0; i < n; i++)
 	{
