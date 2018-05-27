@@ -63,11 +63,12 @@ const char	*DCFS =
 	"void main(){"
 		"fColor = Color;"
 		"if(TexMode)"
-			"fColor.rgb = Color.rgb * texture(Texture, fTex).a;"
-		"if(abs(fPos.x) > 0.8)"
-			"fColor = mix(fColor, vec4(0, 0, 0, 0), (abs(fPos.x) - 0.8) * 5);"
-		"if(abs(fPos.y) > 0.8)"
-			"fColor = mix(fColor, vec4(0, 0, 0, 0), (abs(fPos.y) - 0.8) * 5);"
+			"if(Color.r != Color.g || Color.g != Color.b)" //判定不是灰的东西
+					"fColor.rgb *= texture(Texture, fTex).a;"
+		"if(abs(fPos.x) > 0.5)"
+			"fColor.a *= 1 - (abs(fPos.x) - 0.5) * 2;"
+		"if(abs(fPos.y) > 0.5)"
+			"fColor.a *= 1 - (abs(fPos.y) - 0.5) * 2;"
 	"}";
 /*$on*/
 GLFWwindow	*DCMain;
@@ -98,7 +99,6 @@ int main()
 
 	//Gt_ScrSize(800, 600);    //不使用Gt_Input
 	glViewport(0, 0, 600, 600);
-
 
 	for(i = 0; i < sizeof(bDollar); i++) bDollar[i] = bDollar[i] == ' ' ? '\xFF' : '\x80';
 	glGenTextures(1, &tDollar);
@@ -301,11 +301,27 @@ void QIANSIP(int Mx, int My)
 
 void DCdraw()
 {
-	GtRect	gr[17 * 17 + 1];
+	GtRect	gr[17 * 17];
 	int	x0 = (int) Px, y0 = (int) Py;
 	int	x, y, Mx, My, Mdollar;
 
-	glClearColor(0, 0, 0, 1);
+	GLfloat c[4] = { 0, 0, 0, 1 };
+	if(Sx == 0)
+	{
+		if(Sy == 1)
+			c[0] = 1, c[1] = 1, c[2] = 0.2;
+		else
+			c[0] = 0.2, c[1] = 0.2, c[2] = 1;
+	}
+	else
+	{
+		if(Sx == -1)
+			c[0] = 1, c[1] = 0.2, c[2] = 0.2;
+		else
+			c[0] = 0.2, c[1] = 1, c[2] = 0.2;
+	}
+
+	glClearColor(c[0], c[1], c[2], c[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	Gt_EnableTex(tDollar);
@@ -339,24 +355,8 @@ void DCdraw()
 		}
 	}
 
-	Gt_SetPos(gr[17 * 17], -0.4 / 8, -0.4 / 8, 0.8 / 8, 0.8 / 8);
-	if(Sx == 0)
-	{
-		if(Sy == 1)
-			Gt_SetColor(gr[17 * 17], 1, 1, 0.2, 1);
-		else
-			Gt_SetColor(gr[17 * 17], 0.2, 0.2, 1, 1);
-	}
-	else
-	{
-		if(Sx == -1)
-			Gt_SetColor(gr[17 * 17], 1, 0.2, 0.2, 1);
-		else
-			Gt_SetColor(gr[17 * 17], 0.2, 1, 0.2, 1);
-	}
-
 	Gt_Draw(gr, 17 * 17);
-	DrawCircle(0, 0, 0.4 / 8, &gr[17 * 17].r);
+	DrawCircle(0, 0, 0.4 / 8, c);
 }
 
 void DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4])
