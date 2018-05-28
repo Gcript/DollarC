@@ -24,5 +24,4 @@ void Start()
 	"    Press any key to start\r"
 	/*$on*/
 	);
-	getch();
 }

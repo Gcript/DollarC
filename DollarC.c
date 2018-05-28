@@ -122,24 +122,28 @@ int main()
 	tC = LoadBt(13, 13, bC);
 	tDolC = LoadBt(13, 13, bDolC);
 
-	dollarC();
+	while(1)
+	{
+		getch();
+		dollarC();
+	}
 
 	glfwTerminate();
-
-	getch();
 
 	// free(DCData);           //不要作死
 	return 0;
 }
 
 /****** Main functions ******/
-#define DCMap_H 64
-#define DCMap_W 64
+#define DCMap_H		64
+#define DCMap_W		64
 
-#define Front	0
-#define Back	1
-#define Left	2
-#define Right	3
+#define Front		0
+#define Back		1
+#define Left		2
+#define Right		3
+
+#define PaRGB(R, G, B)	{ R / 255.0, G / 255.0, B / 255.0 }
 /*$off*/
 const struct Pattrib
 {
@@ -147,10 +151,10 @@ const struct Pattrib
 	GLfloat color[3];
 }
 Pattr[4] = {
-	{ 0, 1, { 1, 1, 0} }, //Front
-	{ 0, -1, { 0, 0, 1} },//Back
-	{ -1, 0, { 1, 0, 0} }, //Left
-	{ 1, 0, { 0, 1, 0} } //Right
+	{ 0, 1, PaRGB(255, 185, 0) }, //Front
+	{ 0, -1, PaRGB(0, 120, 215) },//Back
+	{ -1, 0, PaRGB(232, 17, 35) }, //Left
+	{ 1, 0, PaRGB(0, 204, 106) } //Right
 };
 /*$on*/
 char	DCData[DCMap_H][DCMap_W];
@@ -290,25 +294,9 @@ void Trapped(int Mx, int My)
 
 	for(i = 0; i < 33; i++)
 	{
+		const GLfloat	*c = Pattr[i % 4].color;
 		Gt_SetPos(gr[i], 0, 0, 0, 0);
-		switch(i % 4)
-		{
-		case 0:
-			Gt_SetColor(gr[i], 1, 1, 0, 0);
-			break;
-
-		case 1:
-			Gt_SetColor(gr[i], 0, 0, 1, 0);
-			break;
-
-		case 2:
-			Gt_SetColor(gr[i], 1, 0, 0, 0);
-			break;
-
-		case 3:
-			Gt_SetColor(gr[i], 0, 1, 0, 0);
-			break;
-		}
+		Gt_SetColor(gr[i], (int) (c[0] + 0.5), (int) (c[1] + 0.5), (int) (c[2] + 0.5), 0);
 	}
 
 	for(i = 0; i < 256; i++)
