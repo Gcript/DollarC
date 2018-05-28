@@ -22,25 +22,41 @@ typedef struct stGtRect
 /* VERIABLES */
 GLuint	Gt_VAO, Gt_VBO, Gt_VBOtex, Gt_GP, Gt_Tex;
 int	Gt_TexMode;
-GLuint	Gt_lColor, Gt_lTexture, Gt_lTexMode;
+GLuint	Gt_lColor, Gt_lTexMode;
 double	Gt_ScrW, Gt_ScrH;
 
 /* FUNCTIONS & MACROS */
-#define Gt_ScrSize(W, H)		(Gt_ScrW = (W), Gt_ScrH = (H))
-#define Gt_SetPos(_, X, Y, W, H)	((_).x = (X), (_).y = (Y), (_).w = (W), (_).h = (H))
-#define Gt_SetColor(_, R, G, B, A)	((_).r = (R), (_).g = (G), (_).b = (B), (_).a = (A))
-#define Gt_EnableTex(Tex)		(Gt_TexMode = 1, Gt_Tex = Tex)
-#define Gt_DisableTex()			(Gt_TexMode = 0)
 
+// Set screen size for Gt_input
+#define Gt_ScrSize(W, H)	(Gt_ScrW = (W), Gt_ScrH = (H))
+
+// Set GtRect position (X, Y) and size (W, H)
+#define Gt_SetPos(_, X, Y, W, H)	((_).x = (X), (_).y = (Y), (_).w = (W), (_).h = (H))
+
+// Set GtRect color (R, G, B) and alpha (A)
+#define Gt_SetColor(_, R, G, B, A)	((_).r = (R), (_).g = (G), (_).b = (B), (_).a = (A))
+
+// Enable texture drawing
+#define Gt_EnableTex(Tex)	(Gt_TexMode = 1, Gt_Tex = Tex)
+
+// Disable texture drawing (default)
+#define Gt_DisableTex() (Gt_TexMode = 0)
+
+// VSs and FSs are shader program source (GLSL)
 void		Gt_init(const char *VSs, const char *FSs);
+
+// Draw GtRect arrays
 void		Gt_Draw(GtRect *g, int n);
+
+// Check cursor in GtRect arrays
+// return value: -1 - None 0-(n-1) - GtRect[ret];
 int		Gt_Input(GtRect *g, int n, double xpos, double ypos);
 
 /*$off*/
 const char	*Gt_DefVSs =
 	"#version 330 core\n"
-	"layout (location = 0) in vec2 vPos;"
-	"layout (location = 1) in vec2 vTex;"
+	"layout (location = 0) in vec2 vPos;"//GtRect position
+	"layout (location = 1) in vec2 vTex;"//Texture coord (0, 0)-(1, 1)
 	"out vec2 fTex;"
 	"void main(){"
 		"gl_Position = vec4(vPos.x, vPos.y, 0, 1);"
@@ -48,16 +64,16 @@ const char	*Gt_DefVSs =
 	"}";
 const char	*Gt_DefFSs =
 	"#version 330 core\n"
-	"uniform vec4 Color = vec4(0, 0, 0, 0);"
-	"uniform sampler2D Texture;"
-	"uniform bool TexMode = false;"
-	"in vec2 fTex;"
+	"uniform vec4 Color = vec4(0, 0, 0, 0);"//GtRect color
+	"uniform sampler2D Texture;"//Always 0
+	"uniform bool TexMode = false;"//Is Gt_Texture enabled
+	"in vec2 fTex;"//Texture coord
 	"out vec4 fColor;"
 	"void main(){"
-		"if(TexMode)"
-			"fColor = texture(Texture, fTex);"
+		"if(TexMode)"//Is Gt_Texture enabled?
+			"fColor = texture(Texture, fTex);"//draw texture color
 		"else "
-			"fColor = Color;"
+			"fColor = Color;"//draw GtRect color
 	"}";
 /*$on*/
 void Gt_init(const char *VSs, const char *FSs)
@@ -112,10 +128,10 @@ void Gt_init(const char *VSs, const char *FSs)
 		glDeleteShader(GFS);
 
 		Gt_lColor = glGetUniformLocation(Gt_GP, "Color");
-		Gt_lTexture = glGetUniformLocation(Gt_GP, "Texture");
 		Gt_lTexMode = glGetUniformLocation(Gt_GP, "TexMode");
 	}
 
+	glUniform1i(glGetUniformLocation(Gt_GP, "Texture"), 0);
 	glGenVertexArrays(1, &Gt_VAO);
 	glBindVertexArray(Gt_VAO);
 
