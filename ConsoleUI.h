@@ -4,7 +4,7 @@
 void UIInit()
 {
 	SetConsoleTitle("Dollar C");
-	system("mode con cols=30 lines=17&color 8f");
+	system("mode con cols=30 lines=14&color 8f");
 }
 
 void Start()
@@ -21,18 +21,8 @@ void Start()
 	"    ----+---'    `--------\n"
 	"        |\n"
 	"\n"
-	"Control:      C\n"
-	"            B-+-A\n"
-	"              D\n"
-	"\n"
-	"    Press any key to start"
+	"    Press any key to start\r"
 	/*$on*/
 	);
 	getch();
-	FreeConsole();
-}
-
-void Return()
-{
-	AllocConsole();
 }
