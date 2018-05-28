@@ -100,35 +100,34 @@ void		framebuffer_size_callback(GLFWwindow *window, int w, int h);
 
 int main()
 {
-	int	i;
 	UIInit();
 	Start();
-
-	srand(time(NULL));
-
-	// Prepare for glfw
-	glfwInit();
-	DCMain = glfwCreateWindow(600, 600, "Dollar C", NULL, NULL);
-	glfwMakeContextCurrent(DCMain);
-	glfwSetFramebufferSizeCallback(DCMain, framebuffer_size_callback);
-	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-
-	Gt_init(DCVS, DCFS);
-
-	//Gt_ScrSize(800, 600);    //不使用Gt_Input
-	glViewport(0, 0, 600, 600);
-
-	tDollar = LoadBt(13, 13, bDollar);
-	tC = LoadBt(13, 13, bC);
-	tDolC = LoadBt(13, 13, bDolC);
 
 	while(1)
 	{
 		getch();
-		dollarC();
-	}
+		srand(time(NULL));
 
-	glfwTerminate();
+		// Prepare for glfw
+		glfwInit();
+		DCMain = glfwCreateWindow(600, 600, "Dollar C", NULL, NULL);
+		glfwMakeContextCurrent(DCMain);
+		glfwSetFramebufferSizeCallback(DCMain, framebuffer_size_callback);
+		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+
+		Gt_init(DCVS, DCFS);
+
+		//Gt_ScrSize(800, 600);    //不使用Gt_Input
+		glViewport(0, 0, 600, 600);
+
+		tDollar = LoadBt(13, 13, bDollar);
+		tC = LoadBt(13, 13, bC);
+		tDolC = LoadBt(13, 13, bDolC);
+
+		dollarC();
+
+		glfwTerminate();
+	}
 
 	// free(DCData);           //不要作死
 	return 0;
