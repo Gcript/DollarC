@@ -12,17 +12,19 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "gdi32.lib")
 
-/* TYPES */
+/* TYPEDEFS */
 typedef struct stGtRect
 {
-	GLfloat x, y, w, h;
-	GLfloat r, g, b, a;
+	GLfloat x, y, w, h;	//Position & size
+	GLfloat r, g, b, a;	//Color & Alpha
+	GLuint	tex;		//Texture ID
 } GtRect;
 
 /* VERIABLES */
-GLuint	Gt_VAO, Gt_VBO, Gt_VBOtex, Gt_GP, Gt_Tex;
-int	Gt_TexMode;
-GLuint	Gt_lColor, Gt_lTexMode;
+GLuint	Gt_VAO, Gt_VBO, Gt_VBOtex;
+GLuint	Gt_GP;
+int	Gt_TexMode = 0;		//1 - ON 0 - OFF
+GLuint	Gt_lColor, Gt_lTexMode; //Gt_GP uniform location
 double	Gt_ScrW, Gt_ScrH;
 
 /* FUNCTIONS & MACROS */
@@ -36,8 +38,11 @@ double	Gt_ScrW, Gt_ScrH;
 // Set GtRect color (R, G, B) and alpha (A)
 #define Gt_SetColor(_, R, G, B, A)	((_).r = (R), (_).g = (G), (_).b = (B), (_).a = (A))
 
+// Set GtRect texture (If TexMode is ON)
+#define Gt_SetTexture(_, T)	((_).tex = (T))
+
 // Enable texture drawing
-#define Gt_EnableTex(Tex)	(Gt_TexMode = 1, Gt_Tex = Tex)
+#define Gt_EnableTex()	(Gt_TexMode = 1)
 
 // Disable texture drawing (default)
 #define Gt_DisableTex() (Gt_TexMode = 0)
@@ -152,15 +157,15 @@ void Gt_Draw(GtRect *g, int n)
 	int		i;
 	const GLfloat	Vt[][2] = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } };
 
+	glUseProgram(Gt_GP);
+	glBindVertexArray(Gt_VAO);
+
+	glUniform1i(Gt_lTexMode, Gt_TexMode);
+
 	glBindBuffer(GL_ARRAY_BUFFER, Gt_VBOtex);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vt), Vt, GL_DYNAMIC_DRAW);
 
-	glUniform1i(Gt_lTexMode, Gt_TexMode);
-	if(Gt_TexMode)
-	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, Gt_Tex);
-	}
+	if(Gt_TexMode) glActiveTexture(GL_TEXTURE0);
 
 	for(i = 0; i < n; i++)
 	{
@@ -173,8 +178,8 @@ void Gt_Draw(GtRect *g, int n)
 		};
 
 		glUniform4f(Gt_lColor, g[i].r, g[i].g, g[i].b, g[i].a);
-		glUseProgram(Gt_GP);
-		glBindVertexArray(Gt_VAO);
+
+		if(Gt_TexMode) glBindTexture(GL_TEXTURE_2D, g[i].tex);
 
 		glBindBuffer(GL_ARRAY_BUFFER, Gt_VBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(V), V, GL_STREAM_DRAW);
