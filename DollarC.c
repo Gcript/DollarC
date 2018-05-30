@@ -64,10 +64,12 @@ GLubyte bTip[] =	// Press ENTER to play
 const char	*DCVS =
 	"#version 330 core\n"
 	"uniform vec2 xPos;"//坐标偏移
+
 	"layout (location = 0) in vec2 vPos;"
 	"layout (location = 1) in vec2 vTex;"
 	"out vec2 fPos;"
 	"out vec2 fTex;"
+
 	"void main(){"
 		"fPos = vPos + xPos;"
 		"fTex = vTex;"
@@ -75,14 +77,19 @@ const char	*DCVS =
 	"}";
 const char	*DCFS =
 	"#version 330 core\n"
+
 	"uniform vec4 Color;"
 	"uniform sampler2D Texture;"
-	"uniform bool TexMode = false;"////贴图使用开关
-	"uniform int drawMode;"//贴图绘制模式
+
+	"uniform bool TexMode = false;" //贴图使用开关
+	"uniform int drawMode;"		//贴图绘制模式
+	"uniform float shadSize;"	//四周阴影深度
+
 	"in vec2 fPos;"
 	"in vec2 fTex;"
-	"vec2 fTex2;"
 	"out vec4 fColor;"
+	"vec2 fTex2;"
+
 	"void main(){"
 		"fColor = Color;"
 		"if(TexMode)"
@@ -94,15 +101,16 @@ const char	*DCFS =
 			"if(drawMode == 1)"//反色绘制
 				"fColor.rgb *= 1 - texture(Texture, fTex2).a;"
 		"}"
-		"if(abs(fPos.x) > 0.5)"
+
+		"if(abs(fPos.x) > shadSize)"
 			"fColor.a *= 1 - (abs(fPos.x) - 0.5) * 2;"
-		"if(abs(fPos.y) > 0.5)"
+		"if(abs(fPos.y) > shadSize)"
 			"fColor.a *= 1 - (abs(fPos.y) - 0.5) * 2;"
 	"}";
 /*$on*/
 GLFWwindow	*DCMain;
 GLuint		tNothing, tDollar, tC, tDolC, tTip;
-GLuint		lxPos, ldrawMode;
+GLuint		lxPos, ldrawMode, lshadSize;
 
 void		DCMenu();
 void		DCPlay();
@@ -127,8 +135,13 @@ int main()
 
 	lxPos = glGetUniformLocation(Gt_GP, "xPos");
 	ldrawMode = glGetUniformLocation(Gt_GP, "drawMode");
+	lshadSize = glGetUniformLocation(Gt_GP, "shadSize");
 
-	//Gt_ScrSize(800, 600);    //不使用Gt_Input
+	glUniform2f(lxPos, 0, 0);			//坐标偏移:(0, 0)
+	glUniform1i(ldrawMode, 0);			//贴图模式:正常绘制
+	glUniform1f(lshadSize, 0);			//阴影深度:0
+
+	//Gt_ScrSize(800, 600);				//不使用Gt_Input
 	glViewport(0, 0, 600, 600);
 
 	tNothing = LoadBt(1, 1, bNothing);
@@ -149,8 +162,6 @@ int main()
 void DCMenu()
 {
 	GtRect	gr[2];
-	glUniform1i(ldrawMode, 0);			//贴图模式:正常绘制
-	glUniform2f(lxPos, 0, 0);			//坐标偏移:(0, 0)
 	while(1)
 	{
 		glClearColor(0, 0, 0, 1);
@@ -174,6 +185,7 @@ void DCMenu()
 		{
 			DCPlay();
 			glUniform1i(ldrawMode, 0);	//贴图模式:正常绘制
+			glUniform1f(lshadSize, 0);	//阴影深度:0
 		}
 	}
 }
@@ -195,10 +207,10 @@ const struct Pattrib
 	GLfloat color[3];
 }
 Pattr[4] = {
-	{ 0, 1, PaRGB(255, 185, 0) }, //Front
-	{ 0, -1, PaRGB(0, 120, 215) },//Back
+	{ 0, 1, PaRGB(255, 185, 0) },  //Front
+	{ 0, -1, PaRGB(0, 120, 215) }, //Back
 	{ -1, 0, PaRGB(232, 17, 35) }, //Left
-	{ 1, 0, PaRGB(0, 204, 106) } //Right
+	{ 1, 0, PaRGB(0, 204, 106) }   //Right
 };
 /*$on*/
 char	DCData[DCMap_H][DCMap_W];
@@ -211,6 +223,7 @@ void DCPlay()
 {
 	/* init */
 	glUniform1i(ldrawMode, 1);		//贴图模式:反色绘制
+	glUniform1f(lshadSize, 0.5);		//阴影深度:0.5
 	srand(time(NULL));
 	Px = Py = Ptimer = 0;
 	Pdir = Front;
@@ -229,7 +242,6 @@ void DCPlay()
 
 		/* move */
 		{
-			//if(glfwGetKey(DCMain, GLFW_KEY_F)) Ptimer++;
 			if(glfwGetKey(DCMain, GLFW_KEY_W)) Pdir = Front;
 			if(glfwGetKey(DCMain, GLFW_KEY_S)) Pdir = Back;
 			if(glfwGetKey(DCMain, GLFW_KEY_A)) Pdir = Left;
@@ -329,8 +341,8 @@ void DCPlay()
 void DCTrap(int Mx, int My)
 {
 	int	i, j;
-	GtRect	gr[81];
-	for(i = 0; i < 81; i++)
+	GtRect	gr[41];
+	for(i = 0; i < 64; i++)
 	{
 		Px += (Mx + 0.5 - Px) * 0.05;
 		Py += (My + 0.5 - Py) * 0.05;
@@ -343,32 +355,26 @@ void DCTrap(int Mx, int My)
 		if(glfwWindowShouldClose(DCMain)) return;
 	}
 
-	for(i = 0; i < 81; i++)
+	for(i = 0; i < 41; i++)
 	{
-		/*
 		const GLfloat	*c = Pattr[i % 4].color;
 		Gt_SetPos(gr[i], 0, 0, 0, 0);
 		Gt_SetColor(gr[i], (int) (c[0] + 0.5), (int) (c[1] + 0.5), (int) (c[2] + 0.5), 0);
-		*/
-		int	j;
-		for(j = 0; j < 4 * sizeof(GLfloat); j++) ((char *) &gr[i])[j] = rand() * 256 / RAND_MAX;
-#define RAND	(rand() / (GLfloat) RAND_MAX)
-		Gt_SetColor(gr[i], RAND, RAND, RAND, 0);
 		Gt_SetTexture(gr[i], tDolC);
 	}
 
-	for(i = 0; i < 1024; i++)
+	for(i = 0; i < 256; i++)
 	{
-		int	t = i / 8 + 1;
-		if(t > 81)
+		int	t = i / 4 + 1;
+		if(t > 41)
 		{
-			t = 81;
+			t = 41;
 			glUniform2f(lxPos, 0, 0);
 		}
 		else
 			glUniform2f(lxPos, rand() * 0.04 / RAND_MAX - 0.02, rand() * 0.04 / RAND_MAX - 0.02);
 
-		glClearColor(gr[t].r, gr[t].g, gr[t].b, 1);
+		glClearColor(gr[t - 1].r, gr[t - 1].g, gr[t - 1].b, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		DCdraw();
