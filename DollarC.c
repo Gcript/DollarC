@@ -102,10 +102,10 @@ const char	*DCFS =
 				"fColor.rgb *= 1 - texture(Texture, fTex2).a;"
 		"}"
 
-		"if(abs(fPos.x) > shadSize)"
-			"fColor.a *= 1 - (abs(fPos.x) - 0.5) * 2;"
-		"if(abs(fPos.y) > shadSize)"
-			"fColor.a *= 1 - (abs(fPos.y) - 0.5) * 2;"
+		"if(abs(fPos.x) > 1-shadSize)"
+			"fColor.a *= 1 - (abs(fPos.x) + shadSize - 1) / shadSize;"
+		"if(abs(fPos.y) > 1-shadSize)"
+			"fColor.a *= 1 - (abs(fPos.y) + shadSize - 1) / shadSize;"
 	"}";
 /*$on*/
 GLFWwindow	*DCMain;
@@ -178,6 +178,7 @@ void DCMenu()
 		Gt_Draw(gr, 2);
 
 		glfwSwapBuffers(DCMain);
+		glfwSwapInterval(1);
 		glfwPollEvents();
 
 		if(glfwWindowShouldClose(DCMain)) return;
@@ -217,18 +218,65 @@ char	DCData[DCMap_H][DCMap_W];
 double	Px, Py, Ptimer, Psp;			//Player pos, Ptimer, speed
 char	Pdir;					//Player direction
 GLfloat Pcol[4] = { 0, 0, 0, 1 };		//Player color
-int	Ddelay, Drate, Dtimer = 0;		//Dollar
+int	Ddelay = 255, Drate, Dtimer = 0;	//Dollar
 /**/
+void DCBegin()
+{
+	int	i;
+
+	memcpy(Pcol, Pattr[0].color, 3 * sizeof(GLfloat));
+	for(i = 0; i < 32; i++)
+	{
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		DrawCircle((32 - i) / 32.0, (32 - i) / 32.0, 0.4 / 8, Pcol);
+
+		glfwSwapBuffers(DCMain);
+		glfwSwapInterval(1);
+		glfwPollEvents();
+
+		if(glfwWindowShouldClose(DCMain)) return;
+	}
+
+	for(i = 0; i < 128; i++)
+	{
+		glClear(GL_COLOR_BUFFER_BIT);
+		if(i < 64)
+		{
+			glClearColor(0, 0, 0, 1);
+			glUniform2f(lxPos, rand() * 0.08 / RAND_MAX - 0.04, rand() * 0.08 / RAND_MAX - 0.04);
+		}
+		else
+		{
+			double	k = (i - 64) / 64.0;
+			glClearColor(Pcol[0] * k, Pcol[1] * k, Pcol[2] * k, 1);
+			glUniform2f(lxPos, 0, 0);
+		}
+
+		glUniform1f(lshadSize, 1.5 - i / 128.0);
+
+		DCdraw();
+
+		glfwSwapBuffers(DCMain);
+		glfwSwapInterval(1);
+		glfwPollEvents();
+
+		if(glfwWindowShouldClose(DCMain)) return;
+	}
+}
+
 void DCPlay()
 {
 	/* init */
 	glUniform1i(ldrawMode, 1);		//贴图模式:反色绘制
-	glUniform1f(lshadSize, 0.5);		//阴影深度:0.5
 	srand(time(NULL));
 	Px = Py = Ptimer = 0;
 	Pdir = Front;
 	memset(DCData, 0, sizeof(DCData));
 
+	/* Begin Animate */
+	DCBegin();
+	glUniform1f(lshadSize, 0.5);		//阴影深度:0.5
 	while(!glfwWindowShouldClose(DCMain))
 	{
 		char	title[64];
@@ -316,7 +364,7 @@ void DCPlay()
 								((Py - Pointy[y]) * (Py - Pointy[y])) < 0.16
 						)
 						{
-							//Be DCTrap By $
+							//Be Trap By $
 							DCTrap(Mx, My);
 							return;
 						}
@@ -335,6 +383,8 @@ void DCPlay()
 		glfwSwapBuffers(DCMain);
 		glfwSwapInterval(1);
 		glfwPollEvents();
+
+		if(glfwWindowShouldClose(DCMain)) return;
 	}
 }
 
@@ -372,7 +422,7 @@ void DCTrap(int Mx, int My)
 			glUniform2f(lxPos, 0, 0);
 		}
 		else
-			glUniform2f(lxPos, rand() * 0.04 / RAND_MAX - 0.02, rand() * 0.04 / RAND_MAX - 0.02);
+			glUniform2f(lxPos, rand() * 0.08 / RAND_MAX - 0.04, rand() * 0.08 / RAND_MAX - 0.04);
 
 		glClearColor(gr[t - 1].r, gr[t - 1].g, gr[t - 1].b, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
