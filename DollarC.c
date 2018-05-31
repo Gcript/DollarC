@@ -54,13 +54,13 @@ GLubyte bDolC[] =
 	"             ";
 	// 0123456789
 GLubyte bTip[] =	// Press ENTER to play
-	"###                           #### #  # #### #### ###                           ##            "
+	"####                          #### #  # #### #### ####                           #            "
 	"#  #                          #    ## #  #   #    #  #                           #            "
-	"#  #       ##   ###  ###      #    ## #  #   #    #  #       #             ###   #    ##  #  #"
-	"###  # ## #  # #    #         ###  # ##  #   ###  ###       ###   ##       #  #  #      # #  #"
-	"#    ##   ####  ##   ##       #    # ##  #   #    ##         #   #  #      #  #  #    ###  ###"
-	"#    #    #       #    #      #    #  #  #   #    # #        #   #  #      ###   #   #  #    #"
-	"#    #     ##  ###  ###       #### #  #  #   #### #  #       ##   ##       #    ###   ###  ## ";
+	"#  # #### #### #### ####      #    ## #  #   #    #  #       #             ####  #    ### #  #"
+	"#### #  # #  # #    #         #### # ##  #   #### ####      ###  ####      #  #  #      # #  #"
+	"#    #    #### #### ####      #    # ##  #   #    ##         #   #  #      #  #  #   #### ####"
+	"#    #    #       #    #      #    #  #  #   #    # #        #   #  #      ####  #   #  #    #"
+	"#    #    #### #### ####      #### #  #  #   #### #  #       ##  ####      #     #   #### ####";
 const char	*DCVS =
 	"#version 330 core\n"
 	"uniform vec2 xPos;"//坐标偏移
@@ -120,9 +120,8 @@ GLuint		LoadBt(int w, int h, GLubyte data[]);
 void		DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4]);
 void		framebuffer_size_callback(GLFWwindow *window, int w, int h);
 
-int main()
+int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	FreeConsole();
 	glfwInit();
 	DCMain = glfwCreateWindow(600, 600, "Dollar C", NULL, NULL);
 	glfwMakeContextCurrent(DCMain);
@@ -156,7 +155,7 @@ int main()
 
 	glfwTerminate();
 
-	return 0;
+	exit(0);
 }
 
 void DCMenu()
@@ -225,11 +224,13 @@ void DCBegin()
 	int	i;
 
 	memcpy(Pcol, Pattr[0].color, 3 * sizeof(GLfloat));
-	for(i = 0; i < 32; i++)
+	for(i = 0; i < 64; i++)
 	{
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
-		DrawCircle((32 - i) / 32.0, (32 - i) / 32.0, 0.4 / 8, Pcol);
+
+		Pcol[3] = i / 64.0;
+		DrawCircle(0, 0, 1.5 - (1.5 - 0.4 / 8) * i / 64, Pcol);
 
 		glfwSwapBuffers(DCMain);
 		glfwSwapInterval(1);
@@ -238,13 +239,15 @@ void DCBegin()
 		if(glfwWindowShouldClose(DCMain)) return;
 	}
 
+	Pcol[3] = 1;
+
 	for(i = 0; i < 128; i++)
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 		if(i < 64)
 		{
 			glClearColor(0, 0, 0, 1);
-			glUniform2f(lxPos, rand() * 0.08 / RAND_MAX - 0.04, rand() * 0.08 / RAND_MAX - 0.04);
+			glUniform2f(lxPos, rand() * 0.04 / RAND_MAX - 0.02, rand() * 0.04 / RAND_MAX - 0.02);
 		}
 		else
 		{
@@ -254,8 +257,10 @@ void DCBegin()
 		}
 
 		glUniform1f(lshadSize, 1.5 - i / 128.0);
-
 		DCdraw();
+
+		glUniform1f(lshadSize, 0);
+		DrawCircle(0, 0, 0.4 / 8, Pcol);
 
 		glfwSwapBuffers(DCMain);
 		glfwSwapInterval(1);
@@ -401,7 +406,6 @@ void DCTrap(int Mx, int My)
 		glfwSwapInterval(1);
 		glfwPollEvents();
 
-		if(glfwGetKey(DCMain, GLFW_KEY_ESCAPE)) return;
 		if(glfwWindowShouldClose(DCMain)) return;
 	}
 
@@ -422,7 +426,7 @@ void DCTrap(int Mx, int My)
 			glUniform2f(lxPos, 0, 0);
 		}
 		else
-			glUniform2f(lxPos, rand() * 0.08 / RAND_MAX - 0.04, rand() * 0.08 / RAND_MAX - 0.04);
+			glUniform2f(lxPos, rand() * 0.04 / RAND_MAX - 0.02, rand() * 0.04 / RAND_MAX - 0.02);
 
 		glClearColor(gr[t - 1].r, gr[t - 1].g, gr[t - 1].b, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -431,10 +435,10 @@ void DCTrap(int Mx, int My)
 
 		for(j = 0; j < t; j++)
 		{
-			gr[j].x += ((-0.8 - gr[j].x) * 0.2);
-			gr[j].y += ((-0.8 - gr[j].y) * 0.2);
-			gr[j].w += ((1.6 - gr[j].w) * 0.2);
-			gr[j].h += ((1.6 - gr[j].h) * 0.2);
+			gr[j].x += ((-0.8 - gr[j].x) * 0.1);
+			gr[j].y += ((-0.8 - gr[j].y) * 0.1);
+			gr[j].w += ((1.6 - gr[j].w) * 0.1);
+			gr[j].h += ((1.6 - gr[j].h) * 0.1);
 			gr[j].a += ((1 - gr[j].a) * 0.2);
 		}
 
@@ -444,7 +448,6 @@ void DCTrap(int Mx, int My)
 		glfwSwapInterval(1);
 		glfwPollEvents();
 
-		if(glfwGetKey(DCMain, GLFW_KEY_ESCAPE)) return;
 		if(glfwWindowShouldClose(DCMain)) return;
 	}
 
