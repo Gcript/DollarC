@@ -225,6 +225,7 @@ void DCPlay()
 	glUniform1f(lshadSize, 0.5);		//阴影深度:0.5
 	while(!glfwWindowShouldClose(DCMain))
 	{
+		/*
 		char	title[64];
 		sprintf(title, "Dollar C [Time:%5.2lfs]", Ptimer);
 		glfwSetWindowTitle(DCMain, title);
@@ -233,7 +234,8 @@ void DCPlay()
 		Psp = 0.05 + Ptimer * 0.0005;	//Player speed
 		Ddelay = 60 / (1 + Ptimer / 60);			//生成$用的时间
 		Drate = 120 / (1 + Ptimer / 15);			//生成$的频率
-
+		//不用了！！！！！！！！！！
+		*/
 		/* move */
 		{
 			if(glfwGetKey(DCMain, GLFW_KEY_W)) Pdir = Front;
