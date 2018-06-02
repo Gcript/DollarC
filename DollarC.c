@@ -1,66 +1,12 @@
-#define GTCUI_DEBUG
-#include <GtCui.h>
-
+#include <time.h>
 #include <math.h>
 #ifndef M_PI
 #define M_PI	3.141592653589793238462643383
 #endif
-#include <time.h>
+#include <GtCui.h>
+#include "DCFont.h"
 
 /*$off*/
-GLubyte bNothing[] =
-	" ";
-GLubyte bDollar[] =
-	"             "
-	"             "
-	"      #      "
-	"    #####    "
-	"    # #      "
-	"    # #      "
-	"    #####    "
-	"      # #    "
-	"      # #    "
-	"    #####    "
-	"      #      "
-	"             "
-	"             ";
-GLubyte bC[] =
-	"             "
-	"             "
-	"             "
-	"    #####    "
-	"    #        "
-	"    #        "
-	"    #        "
-	"    #        "
-	"    #        "
-	"    #####    "
-	"             "
-	"             "
-	"             ";
-GLubyte bDolC[] =
-	"             "
-	"             "
-	"   #         "
-	" ##### ##### "
-	" # #   #     "
-	" # #   #     "
-	" ##### #     "
-	"   # # #     "
-	"   # # #     "
-	" ##### ##### "
-	"   #         "
-	"             "
-	"             ";
-	// 0123456789
-GLubyte bTip[] =	// Press ENTER to play
-	"####                          #### #  # #### #### ####                           #            "
-	"#  #                          #    ## #  #   #    #  #                           #            "
-	"#  # #### #### #### ####      #    ## #  #   #    #  #       #             ####  #    ### #  #"
-	"#### #  # #  # #    #         #### # ##  #   #### ####      ###  ####      #  #  #      # #  #"
-	"#    #    #### #### ####      #    # ##  #   #    ##         #   #  #      #  #  #   #### ####"
-	"#    #    #       #    #      #    #  #  #   #    # #        #   #  #      ####  #   #  #    #"
-	"#    #    #### #### ####      #### #  #  #   #### #  #       ##  ####      #     #   #### ####";
 const char	*DCVS =
 	"#version 330 core\n"
 	"uniform vec2 xPos;"//坐标偏移
@@ -97,7 +43,7 @@ const char	*DCFS =
 			"fTex2.x = fTex.x;"
 			"fTex2.y = 1 - fTex.y;"
 			"if(drawMode == 0)"//正常绘制
-				"fColor.rgb *= texture(Texture, fTex2).a;"
+				"fColor.a *= texture(Texture, fTex2).a;"
 			"if(drawMode == 1)"//反色绘制
 				"fColor.rgb *= 1 - texture(Texture, fTex2).a;"
 		"}"
@@ -109,18 +55,16 @@ const char	*DCFS =
 	"}";
 /*$on*/
 GLFWwindow	*DCMain;
-GLuint		tNothing, tDollar, tC, tDolC, tTip;
 GLuint		lxPos, ldrawMode, lshadSize;
 
 void		DCMenu();
 void		DCPlay();
 void		DCTrap(int Mx, int My);
 void		DCdraw();
-GLuint		LoadBt(int w, int h, GLubyte data[]);
 void		DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4]);
 void		framebuffer_size_callback(GLFWwindow *window, int w, int h);
 
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	glfwInit();
 	DCMain = glfwCreateWindow(600, 600, "Dollar C", NULL, NULL);
@@ -143,11 +87,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	//Gt_ScrSize(800, 600);				//不使用Gt_Input
 	glViewport(0, 0, 600, 600);
 
-	tNothing = LoadBt(1, 1, bNothing);
-	tDollar = LoadBt(13, 13, bDollar);
-	tC = LoadBt(13, 13, bC);
-	tDolC = LoadBt(13, 13, bDolC);
-	tTip = LoadBt(94, 7, bTip);
+	LoadAllBt();
 
 	Gt_EnableTex();
 	DCMenu();
@@ -230,6 +170,7 @@ void DCBegin()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		Pcol[3] = i / 64.0;
+
 		DrawCircle(0, 0, 1.5 - (1.5 - 0.4 / 8) * i / 64, Pcol);
 
 		glfwSwapBuffers(DCMain);
@@ -396,19 +337,9 @@ void DCPlay()
 void DCTrap(int Mx, int My)
 {
 	int	i, j;
-	GtRect	gr[41];
-	for(i = 0; i < 64; i++)
-	{
-		Px += (Mx + 0.5 - Px) * 0.05;
-		Py += (My + 0.5 - Py) * 0.05;
-		DCdraw();
-		glfwSwapBuffers(DCMain);
-		glfwSwapInterval(1);
-		glfwPollEvents();
+	GtRect	gr[41], gt[6];
 
-		if(glfwWindowShouldClose(DCMain)) return;
-	}
-
+	// gr
 	for(i = 0; i < 41; i++)
 	{
 		const GLfloat	*c = Pattr[i % 4].color;
@@ -417,9 +348,40 @@ void DCTrap(int Mx, int My)
 		Gt_SetTexture(gr[i], tDolC);
 	}
 
-	for(i = 0; i < 256; i++)
+	// gt
+	for(i = 0; i < 6; i++)
 	{
-		int	t = i / 4 + 1;
+		Gt_SetPos(gt[i], i * 0.05 - 0.17, -0.7, 0.04, 0.07);
+		Gt_SetColor(gt[i], 0, 0, 0, 1);
+		Gt_SetTexture(gt[i], tNothing);
+	}
+
+	Gt_SetTexture(gt[3], tN[10]);
+	if(Ptimer >= 100) Gt_SetTexture(gt[0], tN[(int) (Ptimer / 100) % 10]);
+	if(Ptimer >= 10) Gt_SetTexture(gt[1], tN[(int) (Ptimer / 10) % 10]);
+	Gt_SetTexture(gt[2], tN[(int) (Ptimer) % 10]);
+	Gt_SetTexture(gt[4], tN[(int) (Ptimer * 10) % 10]);
+	Gt_SetTexture(gt[5], tN[(int) (Ptimer * 100) % 10]);
+
+	// trapped
+	for(i = 0; i < 64; i++)
+	{
+		Px += (Mx + 0.5 - Px) * 0.05;
+		Py += (My + 0.5 - Py) * 0.05;
+
+		DCdraw();
+
+		glfwSwapBuffers(DCMain);
+		glfwSwapInterval(1);
+		glfwPollEvents();
+
+		if(glfwWindowShouldClose(DCMain)) return;
+	}
+
+	// $c
+	for(i = 0; i < 450; i++)
+	{
+		int	t = i / 4 + 1, t0;
 		if(t > 41)
 		{
 			t = 41;
@@ -427,6 +389,9 @@ void DCTrap(int Mx, int My)
 		}
 		else
 			glUniform2f(lxPos, rand() * 0.04 / RAND_MAX - 0.02, rand() * 0.04 / RAND_MAX - 0.02);
+
+		t0 = t - 8;
+		if(t0 < 0) t0 = 0;
 
 		glClearColor(gr[t - 1].r, gr[t - 1].g, gr[t - 1].b, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -442,7 +407,15 @@ void DCTrap(int Mx, int My)
 			gr[j].a += ((1 - gr[j].a) * 0.2);
 		}
 
-		Gt_Draw(gr, t);
+		Gt_Draw(&gr[t0], t - t0);
+
+		if(i > 300)
+		{
+			glUniform1i(ldrawMode, 0);	//贴图模式:正常模式
+			Gt_Draw(gt, 6);
+			glUniform1i(ldrawMode, 1);	//贴图模式:反色绘制
+			if(glfwGetKey(DCMain, GLFW_KEY_ESCAPE)) return;
+		}
 
 		glfwSwapBuffers(DCMain);
 		glfwSwapInterval(1);
@@ -457,7 +430,7 @@ void DCTrap(int Mx, int My)
 
 void DCdraw()
 {
-	GtRect	gr[17 * 17];
+	GtRect	gr[17 * 17], gc, gt[6];
 	int	x0 = (int) Px, y0 = (int) Py;
 	int	x, y, Mx, My, Mdollar;
 
@@ -470,7 +443,7 @@ void DCdraw()
 			Mdollar = DCData[(Mx + DCMap_H) % DCMap_H][(My + DCMap_W) % DCMap_W];
 
 			Gt_SetPos(gr[x * 17 + y], (Mx - Px) / 8, (My - Py) / 8, 1 / 8.0, 1 / 8.0);
-			if(Mdollar >= Ddelay)	//Have $
+			if(Mdollar >= Ddelay)		//Have $
 			{
 				if(Ptimer - (int) Ptimer < 0.5)
 					Gt_SetColor(gr[x * 17 + y], 0.9, 0.9, 0.1, 1);
@@ -478,7 +451,7 @@ void DCdraw()
 					Gt_SetColor(gr[x * 17 + y], 0.4, 0.4, 0.1, 1);
 				Gt_SetTexture(gr[x * 17 + y], tDollar);
 			}
-			else if(Mdollar != 0)	//Create $
+			else if(Mdollar != 0)		//Create $
 			{
 				Gt_SetColor(gr[x * 17 + y], 0.2 + Mdollar / (float) Ddelay * 0.8, 0.2, 0.2, 1);
 				Gt_SetTexture(gr[x * 17 + y], tDollar);
@@ -495,21 +468,31 @@ void DCdraw()
 	}
 
 	Gt_Draw(gr, 17 * 17);
-	DrawCircle(0, 0, 0.4 / 8, Pcol);
-}
 
-GLuint LoadBt(int w, int h, GLubyte data[])
-{
-	GLuint	ret;
-	int	i;
-	for(i = 0; i < w * h; i++) data[i] = data[i] == ' ' ? 0 : 0xFF;
-	glGenTextures(1, &ret);
-	glBindTexture(GL_TEXTURE_2D, ret);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, data);
-	return ret;
+	DrawCircle(0, 0, 0.4 / 8, Pcol);
+
+	glUniform1i(ldrawMode, 0);		//贴图模式:正常绘制
+	Gt_SetPos(gc, -0.4 / 8, -0.4 / 8, 0.8 / 8, 0.8 / 8);
+	Gt_SetColor(gc, 0, 0, 0, 1);
+	Gt_SetTexture(gc, tC);
+	Gt_Draw(&gc, 1);
+
+	for(x = 0; x < 6; x++)
+	{
+		Gt_SetPos(gt[x], x * 0.05 - 0.17, -0.5, 0.04, 0.07);
+		Gt_SetColor(gt[x], Pcol[0], Pcol[1], Pcol[2], 1);
+		Gt_SetTexture(gt[x], tNothing);
+	}
+
+	Gt_SetTexture(gt[3], tN[10]);
+	if(Ptimer >= 100) Gt_SetTexture(gt[0], tN[(int) (Ptimer / 100) % 10]);
+	if(Ptimer >= 10) Gt_SetTexture(gt[1], tN[(int) (Ptimer / 10) % 10]);
+	Gt_SetTexture(gt[2], tN[(int) (Ptimer) % 10]);
+	Gt_SetTexture(gt[4], tN[(int) (Ptimer * 10) % 10]);
+	Gt_SetTexture(gt[5], tN[(int) (Ptimer * 100) % 10]);
+
+	Gt_Draw(gt, 6);
+	glUniform1i(ldrawMode, 1);		//贴图模式:反色绘制
 }
 
 void DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4])
