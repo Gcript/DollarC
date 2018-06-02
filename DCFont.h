@@ -144,7 +144,7 @@ const GLubyte *bN[11] = {
 	" #  ",
 };
 
-const GLubyte Zh_tip[] = {
+const GLubyte *Zh_tip[] = {
 	"  #        #       "
 	"  #         #      "
 	"#####   #########  "
