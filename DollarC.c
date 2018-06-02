@@ -45,13 +45,14 @@ const char	*DCFS =
 			"if(drawMode == 0)"//正常绘制
 				"fColor.a *= texture(Texture, fTex2).a;"
 			"if(drawMode == 1)"//反色绘制
+			"{"
 				"fColor.rgb *= 1 - texture(Texture, fTex2).a;"
+				"if(abs(fPos.x) > 1-shadSize)"
+					"fColor.a *= 1 - (abs(fPos.x) + shadSize - 1) / shadSize;"
+				"if(abs(fPos.y) > 1-shadSize)"
+					"fColor.a *= 1 - (abs(fPos.y) + shadSize - 1) / shadSize;"
+			"}"
 		"}"
-
-		"if(abs(fPos.x) > 1-shadSize)"
-			"fColor.a *= 1 - (abs(fPos.x) + shadSize - 1) / shadSize;"
-		"if(abs(fPos.y) > 1-shadSize)"
-			"fColor.a *= 1 - (abs(fPos.y) + shadSize - 1) / shadSize;"
 	"}";
 /*$on*/
 GLFWwindow	*DCMain;
