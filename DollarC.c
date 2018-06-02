@@ -110,7 +110,7 @@ void DCMenu()
 		Gt_SetColor(gr[0], 0.9, 0.9, 0.1, 1);
 		Gt_SetTexture(gr[0], tDolC);
 
-		Gt_SetPos(gr[1], -0.47, -0.5, 0.94, 0.07);
+		Gt_SetPos(gr[1], -0.47, -0.5, 0.94, 0.14);
 		Gt_SetColor(gr[1], 0.8, 0.8, 0.2, 1);
 		Gt_SetTexture(gr[1], tTip);
 
@@ -229,13 +229,14 @@ void DCPlay()
 		char	title[64];
 		sprintf(title, "Dollar C [Time:%5.2lfs]", Ptimer);
 		glfwSetWindowTitle(DCMain, title);
-
+		*/
 		Ptimer += 1 / 60.0;
 		Psp = 0.05 + Ptimer * 0.0005;	//Player speed
 		Ddelay = 60 / (1 + Ptimer / 60);			//生成$用的时间
 		Drate = 120 / (1 + Ptimer / 15);			//生成$的频率
-		//不用了！！！！！！！！！！
-		*/
+
+		//不用了??????????
+
 		/* move */
 		{
 			if(glfwGetKey(DCMain, GLFW_KEY_W)) Pdir = Front;
