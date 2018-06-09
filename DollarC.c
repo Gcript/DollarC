@@ -68,6 +68,9 @@ void		framebuffer_size_callback(GLFWwindow *window, int w, int h);
 int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	glfwInit();
+	//glEnable(GL_MULTISAMPLE);
+	glfwWindowHint(GLFW_SAMPLES, 4);
+	
 	DCMain = glfwCreateWindow(600, 600, "Dollar C", NULL, NULL);
 	glfwMakeContextCurrent(DCMain);
 	glfwSetFramebufferSizeCallback(DCMain, framebuffer_size_callback);
@@ -112,12 +115,13 @@ void DCMenu()
 		Gt_SetTexture(gr[0], tDolC);
 
 		Gt_SetPos(gr[1], -0.47, -0.5, 0.94, 0.14);
-		Gt_SetColor(gr[1], 0.8, 0.8, 0.2, 1);
+		Gt_SetColor(gr[1], 1.0, 0.75, 0.0, 1);
 		Gt_SetTexture(gr[1], tTip);
 
 		Gt_Draw(gr, 2);
 
 		glfwSwapBuffers(DCMain);
+		glfwWaitEvents();
 		glfwSwapInterval(1);
 		glfwPollEvents();
 
@@ -236,14 +240,22 @@ void DCPlay()
 		Ddelay = 60 / (1 + Ptimer / 60);			//生成$用的时间
 		Drate = 120 / (1 + Ptimer / 15);			//生成$的频率
 
-		//不用了??????????
+		
 
 		/* move */
 		{
-			if(glfwGetKey(DCMain, GLFW_KEY_W)) Pdir = Front;
-			if(glfwGetKey(DCMain, GLFW_KEY_S)) Pdir = Back;
-			if(glfwGetKey(DCMain, GLFW_KEY_A)) Pdir = Left;
-			if(glfwGetKey(DCMain, GLFW_KEY_D)) Pdir = Right;
+			if(
+				glfwGetKey(DCMain, GLFW_KEY_W)|| glfwGetKey(DCMain, GLFW_KEY_UP)
+				) Pdir = Front;
+			if(
+				glfwGetKey(DCMain, GLFW_KEY_S) || glfwGetKey(DCMain, GLFW_KEY_DOWN)
+				) Pdir = Back;
+			if(
+				glfwGetKey(DCMain, GLFW_KEY_A) || glfwGetKey(DCMain, GLFW_KEY_LEFT)
+				) Pdir = Left;
+			if(
+				glfwGetKey(DCMain, GLFW_KEY_D) || glfwGetKey(DCMain, GLFW_KEY_RIGHT)
+				) Pdir = Right;
 			if(glfwGetKey(DCMain, GLFW_KEY_ESCAPE)) return;
 
 			memcpy(Pcol, Pattr[Pdir].color, 3 * sizeof(GLfloat));
@@ -502,14 +514,14 @@ void DCdraw()
 void DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4])
 {
 	int	i;
-	GLfloat I[32][2];
-	GLfloat Itex[32][2];
-	for(i = 0; i < 32; i++)
+	GLfloat I[64][2];
+	GLfloat Itex[64][2];
+	for(i = 0; i < 64; i++)
 	{
-		I[i][0] = x + r * cos(2 * M_PI * i / 32);
-		I[i][1] = y + r * sin(2 * M_PI * i / 32);
-		Itex[i][0] = (cos(2 * M_PI * i / 32) + 1) / 2;
-		Itex[i][1] = (sin(2 * M_PI * i / 32) + 1) / 2;
+		I[i][0] = x + r * cos(2 * M_PI * i / 64);
+		I[i][1] = y + r * sin(2 * M_PI * i / 64);
+		Itex[i][0] = (cos(2 * M_PI * i / 64) + 1) / 2;
+		Itex[i][1] = (sin(2 * M_PI * i / 64) + 1) / 2;
 	}
 
 	glUniform4f(Gt_lColor, c[0], c[1], c[2], c[3]);
@@ -522,7 +534,7 @@ void DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4])
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Itex), Itex, GL_STREAM_DRAW);
 
 	glBindTexture(GL_TEXTURE_2D, tC);	//Extra
-	glDrawArrays(GL_POLYGON, 0, 32);
+	glDrawArrays(GL_POLYGON, 0, 64);
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int w, int h)
