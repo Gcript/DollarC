@@ -5,6 +5,15 @@
 #endif
 #include <GtCui.h>
 #include "DCFont.h"
+#include <irrKlang.h>
+#include <iostream>
+using namespace irrklang;
+
+#pragma comment(lib, "irrKlang.lib")
+
+ISoundEngine* engine;
+ISound* music;
+
 
 /*$off*/
 const char	*DCVS =
@@ -65,8 +74,13 @@ void		DCdraw();
 void		DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4]);
 void		framebuffer_size_callback(GLFWwindow *window, int w, int h);
 
+
+
 int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+//int main()
 {
+	
+
 	glfwInit();
 	//glEnable(GL_MULTISAMPLE);
 	glfwWindowHint(GLFW_SAMPLES, 4);
@@ -75,7 +89,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	glfwMakeContextCurrent(DCMain);
 	glfwSetFramebufferSizeCallback(DCMain, framebuffer_size_callback);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-
+	glEnable(GL_BLEND);
 	Gt_init(DCVS, DCFS);
 
 	glUseProgram(Gt_GP);
@@ -86,7 +100,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 	glUniform2f(lxPos, 0, 0);			//坐标偏移:(0, 0)
 	glUniform1i(ldrawMode, 0);			//贴图模式:正常绘制
-	glUniform1f(lshadSize, 0);			//阴影深度:0
+	glUniform1f(lshadSize, 0);			//阴影深度:0 
 
 	//Gt_ScrSize(800, 600);				//不使用Gt_Input
 	glViewport(0, 0, 600, 600);
@@ -136,8 +150,8 @@ void DCMenu()
 }
 
 /****** Main functions ******/
-#define DCMap_H		256
-#define DCMap_W		256
+#define DCMap_H		512
+#define DCMap_W		512
 
 #define Front		0
 #define Back		1
@@ -166,6 +180,12 @@ int	Ddelay = 255, Drate, Dtimer = 0;	//Dollar
 /**/
 void DCBegin()
 {
+	engine = createIrrKlangDevice();
+	if (!engine)return;
+	music = engine->play3D("Data/Start.mp3",
+		vec3df(0, 0, 0), false, false, true);
+	
+
 	int	i;
 
 	memcpy(Pcol, Pattr[0].color, 3 * sizeof(GLfloat));
@@ -216,6 +236,9 @@ void DCBegin()
 	}
 }
 
+float posOnCircle = 0;
+const float radius = 5;
+
 void DCPlay()
 {
 	/* init */
@@ -227,7 +250,10 @@ void DCPlay()
 
 	/* Begin Animate */
 	DCBegin();
-	glUniform1f(lshadSize, 0.5);		//阴影深度:0.5
+	glUniform1f(lshadSize, 0.5);
+	char Active = 1;
+
+	//阴影深度:0.5
 	while(!glfwWindowShouldClose(DCMain))
 	{
 		/*
@@ -235,10 +261,28 @@ void DCPlay()
 		sprintf(title, "Dollar C [Time:%5.2lfs]", Ptimer);
 		glfwSetWindowTitle(DCMain, title);
 		*/
+		if(Ptimer>5.2&&Active)
+			Active=0,
+		engine->play3D("Data/Middle.mp3",
+			vec3df(0, 0, 0), true, false, true);
 		Ptimer += 1 / 60.0;
 		Psp = 0.05 + Ptimer * 0.0005;	//Player speed
 		Ddelay = 60 / (1 + Ptimer / 60);			//生成$用的时间
 		Drate = 120 / (1 + Ptimer / 15);			//生成$的频率
+
+													// Each step we calculate the position of the 3D music.
+													// For this example, we let the
+													// music position rotate on a circle:
+		//irrklang
+		posOnCircle += 0.2f;
+		vec3df pos3d(
+			radius * cosf(posOnCircle)*0.125f-0.05f, 
+			radius * sinf(posOnCircle)* 0.125f - 0.01f,
+			radius * sinf(posOnCircle)* 0.125f - 0.01f	+1.0f
+			
+			);
+		engine->setListenerPosition(vec3df(0, 0, 0), vec3df(0, 0, 1));
+		if (music)music->setPosition(pos3d);
 
 		
 
@@ -256,7 +300,7 @@ void DCPlay()
 			if(
 				glfwGetKey(DCMain, GLFW_KEY_D) || glfwGetKey(DCMain, GLFW_KEY_RIGHT)
 				) Pdir = Right;
-			if(glfwGetKey(DCMain, GLFW_KEY_ESCAPE)) return;
+			if (glfwGetKey(DCMain, GLFW_KEY_ESCAPE)) { music->drop(); engine->drop(); return; }
 
 			memcpy(Pcol, Pattr[Pdir].color, 3 * sizeof(GLfloat));
 
@@ -306,6 +350,7 @@ void DCPlay()
 		}
 
 		/* check $ */
+		
 		{
 			int	x0 = (int) Px, y0 = (int) Py;
 			int	x, y, Mx, My, Mdollar;
@@ -326,6 +371,7 @@ void DCPlay()
 								((Py - Pointy[y]) * (Py - Pointy[y])) < 0.16
 						)
 						{
+							
 							//Be Trap By $
 							DCTrap(Mx, My);
 							return;
@@ -352,6 +398,12 @@ void DCPlay()
 
 void DCTrap(int Mx, int My)
 {
+	music->drop(); engine->drop();
+	//No Blinder!
+	engine = createIrrKlangDevice();
+	if (!engine)return;
+	music = engine->play3D("Data/End.mp3",
+		vec3df(0, 0, 0), false, false, true);
 	int	i, j;
 	GtRect	gr[41], gt[6];
 
@@ -391,7 +443,10 @@ void DCTrap(int Mx, int My)
 		glfwSwapInterval(1);
 		glfwPollEvents();
 
-		if(glfwWindowShouldClose(DCMain)) return;
+		if (glfwWindowShouldClose(DCMain)) { 
+			music->drop(); engine->drop();
+			return; 
+		}
 	}
 
 	// $c
@@ -425,19 +480,25 @@ void DCTrap(int Mx, int My)
 
 		Gt_Draw(&gr[t0], t - t0);
 
-		if(i > 300)
+		if(i > 275)
 		{
 			glUniform1i(ldrawMode, 0);	//贴图模式:正常模式
 			Gt_Draw(gt, 6);
 			glUniform1i(ldrawMode, 1);	//贴图模式:反色绘制
-			if(glfwGetKey(DCMain, GLFW_KEY_ESCAPE)) return;
+			if (glfwGetKey(DCMain, GLFW_KEY_ESCAPE)) { 
+				music->drop(); engine->drop(); 
+				return; 
+			}
 		}
 
 		glfwSwapBuffers(DCMain);
 		glfwSwapInterval(1);
 		glfwPollEvents();
 
-		if(glfwWindowShouldClose(DCMain)) return;
+		if (glfwWindowShouldClose(DCMain)) {
+			music->drop(); engine->drop();
+			return;
+		}
 	}
 
 	Px = Mx;
@@ -474,11 +535,15 @@ void DCdraw()
 			}
 			else			//No $
 			{
-				if((Mx + My) % 2 == 0)
-					Gt_SetColor(gr[x * 17 + y], 0.1, 0.1, 0.1, 1);
-				else
-					Gt_SetColor(gr[x * 17 + y], 0.2, 0.2, 0.2, 1);
-				Gt_SetTexture(gr[x * 17 + y], tNothing);
+				if ((Mx + My) % 2 == 0) {
+					float tmp_0x123 = 0.1f*sinf(Ptimer)+0.05f;
+					Gt_SetColor(gr[x * 17 + y], tmp_0x123, tmp_0x123, tmp_0x123, 1);
+					Gt_SetTexture(gr[x * 17 + y],tNothing);
+				}
+				else {
+					Gt_SetColor(gr[x * 17 + y], 0.3, 0.3, 0.3, 0.99f);
+					Gt_SetTexture(gr[x * 17 + y], tNothing);
+				}
 			}
 		}
 	}

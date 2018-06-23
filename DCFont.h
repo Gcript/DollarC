@@ -1,10 +1,10 @@
 void		LoadAllBt();
-GLuint		LoadBt(int w, int h, const GLubyte *data);
+GLuint		LoadBt(int w, int h, const char *data);
 
 /*$off*/
-const GLubyte bNothing[] =
+const char bNothing[] =
 	" ";
-const GLubyte bDollar[] =
+const char bDollar[] =
 	"             "
 	"             "
 	"      #      "
@@ -18,7 +18,7 @@ const GLubyte bDollar[] =
 	"      #      "
 	"             "
 	"             ";
-const GLubyte bC[] =
+const char bC[] =
 	"             "
 	"             "
 	"             "
@@ -32,7 +32,7 @@ const GLubyte bC[] =
 	"             "
 	"             "
 	"             ";
-const GLubyte bDolC[] =
+const char bDolC[] =
 	"             "
 	"             "
 	"   #         "
@@ -46,7 +46,7 @@ const GLubyte bDolC[] =
 	"   #         "
 	"             "
 	"             ";
-const GLubyte bTip[] =						// Press ENTER to play
+const char bTip[] =						// Press ENTER to play
 	"####                          #### #  # #### #### ####                           #            "
 	"#  #                          #    ## #  #   #    #  #                           #            "
 	"#  # #### #### #### ####      #    ## #  #   #    #  #       #             ####  #    ### #  #"
@@ -54,7 +54,7 @@ const GLubyte bTip[] =						// Press ENTER to play
 	"#    #    #### #### ####      #    # ##  #   #    ##         #   #  #      #  #  #   #### ####"
 	"#    #    #       #    #      #    #  #  #   #    # #        #   #  #      ####  #   #  #    #"
 	"#    #    #### #### ####      #### #  #  #   #### #  #       ##  ####      #     #   #### ####";
-const GLubyte *bN[11] = {
+const char *bN[11] = {
 	"####"//0
 	"#  #"
 	"#  #"
@@ -143,18 +143,18 @@ const GLubyte *bN[11] = {
 	"    "
 	" #  ",
 };
-const GLubyte Zh_tip[] =
+const char Zh_tip[] =
 	//                 |                  |                  |                  |                  |                  |
-	"  #         #                                 #            #    ###    #       ###########        #        #      "
+	"  #          #                                #            #    ###    #       ###########        #        #      "
 	"  #         #       #################        #            #####   #  #####        #    #         #        #       "
-	"#####  ###########  #               #   ###############  #        #    # #        #    #      ########   #    #   "
-	"  #    #    #    #  #   #########   #      #              #####  #  #######       #    #        #   #   #      #  "
+	"#####  ###########  #               #   ###############  #        #    # #        #    #        #  #     #    #   "
+	"  #    #    #    #  #   #########   #      #              #####  #  #######       #    #      ########  #      #  "
 	"  #        #        #   #       #   #     #    #           #    ###  #####   ################  #   #   ########## "
-	"  #    ###########  #   #       #   #    #############    #####   #    #         #     #        # #              #"
+	"  #    ###########  #   #       #   #    #############    #####   #    #         #     #        # #               "
 	"#####     #  #      #   #       #   #          #           #      #   ##         #     #         #       #######  "
-	"  #        ##       #   #########   #          #           #  ##  #    ###       #     #        # #      #     #  "
+	"  #        ##       #   #########   #          #           #  ##  #  # ###       #     #        # #      #     #  "
 	"  #        # #      #               #  #################   ###   #     #        #      #        #  #     #     #  "
-	"###      ##   ###   #################          #           #    ###########     #      #       #    #    #######  ";
+	"###     ###   ###   #################          #           #    # #########     #      #       #    #    #######  ";
 /*$on*/
 GLuint		tNothing, tDollar, tDolC, tC, tTip;
 GLuint		tN[11];
@@ -171,11 +171,11 @@ void LoadAllBt()
 	for(i = 0; i < 11; i++) tN[i] = LoadBt(4, 7, bN[i]);
 }
 
-GLuint LoadBt(int w, int h, const GLubyte *data)
+GLuint LoadBt(int w, int h, const char *data)
 {
 	GLuint	ret;
 	int	i;
-	GLubyte *data0 = (GLubyte *) malloc(w * h * sizeof(GLubyte));
+	char *data0 = (char *) malloc(w * h * sizeof(char));
 	for(i = 0; i < w * h; i++) data0[i] = data[i] == ' ' ? 0 : 0xFF;
 	glGenTextures(1, &ret);
 	glBindTexture(GL_TEXTURE_2D, ret);
