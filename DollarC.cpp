@@ -602,8 +602,14 @@ void DrawCircle(GLfloat x, GLfloat y, GLfloat r, GLfloat c[4])
 	glDrawArrays(GL_POLYGON, 0, 64);
 }
 
+#define Gt_Target_Radio 1/1
 void framebuffer_size_callback(GLFWwindow *window, int w, int h)
 {
-	glViewport(0, 0, w, h);
-	glfwSetWindowAspectRatio(window, 1, 1);
+	if (w / h >= Gt_Target_Radio) {
+		glViewport((w - h * Gt_Target_Radio) / 2, 0, h*Gt_Target_Radio, h);
+
+	}
+	else {
+		glViewport(0, (h - w / Gt_Target_Radio) / 2, w, w / Gt_Target_Radio);
+	}
 }
